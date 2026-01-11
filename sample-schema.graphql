@@ -1,0 +1,55 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+type Query {
+  product(id: ID!): Product
+}
+type Product {
+  id: ID!
+  name: String!
+  optionGroups: [ProductOptionGroup!]!
+  variants: [ProductVariant!]!
+}
+
+type ProductOptionGroup {
+  id: ID!
+  name: String!
+  productId: ID!
+}
+
+type ProductVariant {
+  id: ID!
+  sku: String!
+  priceCents: Int!
+  trackInventory: Boolean!
+  productId: ID!
+  optionGroupId: ID!
+}
+type Mutation {
+  createProduct(input: CreateProductInput!): Product!
+
+  createProductOptionGroup(
+    productId: ID!
+    input: CreateProductOptionGroupInput!
+  ): ProductOptionGroup!
+
+  createProductVariants(
+    productId: ID!
+    optionGroupId: ID!
+    input: CreateProductVariantInput!
+  ): ProductVariant!
+}
+input CreateProductInput {
+  name: String!
+}
+
+input CreateProductOptionGroupInput {
+  name: String!
+}
+
+input CreateProductVariantInput {
+  sku: String!
+  priceCents: Int!
+  trackInventory: Boolean!
+}
