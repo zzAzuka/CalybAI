@@ -14,7 +14,7 @@ From the Calyb website, we can see that the requirement to make use of this soft
 1. Using the available GraphQL Schema, we can infer all the API operations that can be done from the backend.
 2. When doing network analysis, we can find out what button is being clicked and what API endpoint it targets.
 
-## **Track:** The Promotion Challenge
+# **Track:** The Promotion Challenge
 **Request:** Create a Black Friday coupon code 'BF2024'. It should apply a 15% discount, but only if the order total is above $100 AND the customer is in the 'VIP' group.
 
 ### Manual Workflow with API Calls:
@@ -96,12 +96,9 @@ fragment ConfigArgDefinition on ConfigArgDefinition {\n  name\n  type\n  require
 
 **Request Payloads:**
 ```q
-{"query":"mutation CreatePromotion($input: CreatePromotionInput!) {\n createPromotion(input: $input) 
-{\n __typename\n ... on Promotion {\n id\n }\n ... on ErrorResult {\n errorCode\n message\n }\n }\n}",
-"variables":{"input":{"enabled":false,"startsAt":"2026-01-13T18:30:00.000Z","endsAt":"2026-01-28T18:30:00.000Z",
-"couponCode":"BF2024","perCustomerUsageLimit":1,"usageLimit":1,
-"conditions":[{"code":"minimum_order_amount","arguments":[{"name":"amount","value":"10000"},{"name":"taxInclusive","value":"true"}]}],
-"actions":[{"code":"order_percentage_discount","arguments":[{"name":"discount","value":"15"}]}],"translations":[{"languageCode":"en","name":"Black Friday Coupon Code (15%)","description":"","customFields":{}}],"customFields":{}}}}
+{"query":"mutation CreatePromotion($input: CreatePromotionInput!) {\n  createPromotion(input: $input) 
+{\n    __typename\n    ... on Promotion {\n      id\n    }\n    ... on ErrorResult {\n      errorCode\n      message\n    }\n  }\n}",
+"variables":{"input":{"enabled":true,"couponCode":"BF2024","perCustomerUsageLimit":1,"usageLimit":1,"conditions":[{"code":"minimum_order_amount","arguments":[{"name":"amount","value":"10000"},{"name":"taxInclusive","value":"false"}]},{"code":"customer_group","arguments":[{"name":"customerGroupId","value":"1"}]}],"actions":[{"code":"order_percentage_discount","arguments":[{"name":"discount","value":"15"}]}],"translations":[{"languageCode":"en","name":"Black Friday Coupon Code (15%)","description":"","customFields":{}}],"customFields":{}}}}
 ```
 ```q
 {"query":"query PromotionDetail($id: ID!) {\n promotion(id: $id) 
@@ -110,3 +107,11 @@ conditions {\n ...ConfigurableOperation\n }\n actions {\n ...ConfigurableOperati
 translations {\n id\n languageCode\n name\n description\n }\n customFields\n }\n}\n\n
 fragment ConfigurableOperation on ConfigurableOperation {\n args {\n name\n value\n }\n code\n}","variables":{"id":"2"}}
 ```
+---
+
+# **Track:** The Global Challenge
+**Request:** Set up a new shipping zone for 'Oceania'. Add 'Australia' and 'New Zealand' to this zone. Then, configure a 'Flat Rate' shipping method of $15 that only applies to this zone.
+
+### Manual Workflow with API Calls:
+
+**STEP 1:**
