@@ -5,6 +5,18 @@
 - The inputs, types and shapes of all the data structures and naming conventions were checked and understood
 against the Vendure GraphQL API Docs.
 
+## Answering the Questions
+
+**How did you map the UI label to the API field? Did you use string similarity? HTML inspection? Network tab analysis?**
+- For REST API based websites, we can use the docs to find the endpoints to understand the API Layer, and likewise for the GraphQL alternative, we can expose the schema and see the available operations.
+- Then we record the UI operations, by clicking and monitoring the Network Tab and we see the respective API calls that are being called, and we find the ones that are semantically similar to the operation we are trying to do.
+
+**"If I dropped you into a Salesforce or Jira API tomorrow, what search algorithm would you use to map their fields without reading the entire manual?"**
+- So like what we have done with Vendure, We Get the API Layer and the UI Clicks from the front-end as an 
+exploration phase, where we collect all the operations.
+- In between, we cannot automate everything, so we need human in the loop to undertstand some semantic dissimilarity and gaps by using the API Docs.
+- Then we can have an agent, which can take the API docs as the document store and as we find the queries and mutations that we are finding in the Network Tab analysis, we can have the agent refer to the User question and if it is related and have it.
+
 ## Approach for Track: Promotion Challenge
 
 **Ambuguity Faced:** The task asks us to add the 15% Black Friday to all customer that belong to the "VIP" customer group, but as it was not present by default, my workflow also contains
