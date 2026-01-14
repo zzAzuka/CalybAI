@@ -26,3 +26,28 @@ Contrasting this with the UI we can see that,
 - For all the customer group created (VIP in this case), the payload "arguments":[{"name":"customerGrouptId}] is showing that all the customer groups are being named as "CustomerGroupdID".
 
 - When adiing a user into the VIP Customer Group, the name is not being used as reference rather, the groupID which is assigned when we created the group is used to assign it to an user.
+
+## Findings in Track: The Gloabal Challenge
+
+The Region API in TypeScript is made like,
+```q
+class Region extends VendureEntity implements Translatable, HasCustomFields {
+    @Column() code: string;
+    @Column({ nullable: false, type: 'varchar' })
+    readonly type: RegionType;
+    name: LocaleString;
+    @Index()
+    @ManyToOne(type => Region, { nullable: true, onDelete: 'SET NULL' })
+    parent?: Region;
+    @EntityId({ nullable: true })
+    parentId?: ID;
+    @Column() enabled: boolean;
+    @OneToMany(type => RegionTranslation, translation => translation.base, { eager: true })
+    translations: Array<Translation<Region>>;
+    @Column(type => CustomRegionFields)
+    customFields: CustomRegionFields;
+}
+```
+
+Contrasting this with the UI we can see that,
+- When we click a region it is all consolidated as the above format, but when we add this region and the **AddMembersToZone** it picks up only the MemberID and assigns it as a identifier.
