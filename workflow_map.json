@@ -1,146 +1,288 @@
 {
-  "workflow_name": "create_shipping_zone_and_shipping_method",
-  "description": "Create Oceania shipping zone with AU,NZ countries and $15 flat rate shipping",
-  "steps": [
-    {
-      "id": "step_1",
-      "ui_action": "Navigate to Settings: Zones",
-      "api_event": {
-        "type": "query",
-        "name": "list of zones",
-        "operation": "ZoneList",
-        "parameters": {
-            "options": {
-            "take": 10,
-            "skip": 0,
-            "sort": {},
-            "filter": {}
+  "track1": {
+    "workflow_name": "create_blackfriday_promotion_for_vip",
+    "description": "Create a Promotion code for Black Friday, which applies 15% offer for VIP and order above $100",
+    "steps": [
+      {
+        "id": "step_1",
+        "ui_action": "Navigate to Customer Groups and click 'Create Customer Group'",
+        "api_event": {
+          "type": "mutation",
+          "name": "CreateCustomerGroup",
+          "operation": "CreateCustomerGroup",
+          "parameters": {
+            "input": {
+              "name": "VIP",
+              "customerIds": [],
+              "customFields": {}
             }
+          },
+          "purpose": "Create a new customer group called VIP"
         },
-        "purpose": "Load available zones"
+        "dependencies": [],
+        "output_mapping": {
+          "vip_group_id": "response.data.createCustomerGroup.id"
+        }
       },
-      "dependencies": [],
-      "output_mapping": {
-        "existing_zones": "response.data.zones.items"
-      }
-    },
-    {
-      "id": "step_2",
-      "ui_action": "Click 'Create New Zone'",
-      "api_event": {
-        "type": "mutation",
-        "name": "CreateZone",
-        "operation": "mutation CreateZone($input: CreateZoneInput!) { createZone(input: $input) { id } }",
-        "parameters": {
-          "input": {
-            "name": "Oceania New",
-            "memberIds": [],
-            "customFields": {}
-          }
+      {
+        "id": "step_2",
+        "ui_action": "Add a customer to the VIP customer group",
+        "api_event": {
+          "type": "mutation",
+          "name": "AddCustomerToGroup",
+          "operation": "AddCustomerToGroup",
+          "parameters": {
+            "customerId": "1",
+            "groupId": "{{vip_group_id}}"
+          },
+          "purpose": "Assign the customer to the VIP group"
         },
-        "purpose": "Create new shipping zone"
+        "dependencies": ["step_1"],
+        "output_mapping": {
+          "updated_group_id": "response.data.addCustomersToGroup.id"
+        }
       },
-      "dependencies": [],
-      "output_mapping": {
-        "zone_id": "response.data.createZone.id"
-      }
-    },
-    {
-      "id": "step_3",
-      "ui_action": "Select AU and NZ, click 'Add to Zone' from the country list",
-      "api_event": {
-        "type": "mutation",
-        "name": "AddMembersToZone",
-        "operation": "mutation AddMembersToZone($zoneId: ID!, $memberIds: [ID!]!) { addMembersToZone(zoneId: $zoneId, memberIds: $memberIds) { id } }",
-        "parameters": {
-          "variables": {
-            "id": "{output.step_2.zone_id}",
-            "memberIds": ["{au_id}", "{nz_id}"]
-          }
-        },
-        "purpose": "Add countries to the created zone"
-      },
-      "dependencies": ["step_2"],
-      "output_mapping": {
-        "updated_zone_id": "addMembersToZone.id"
-      }
-    },
-    {
-      "id": "step_4",
-      "ui_action": "Navigate to Settings and Click Shipping Methods",
-      "api_event": {
-        "type": "query",
-        "name": "shippingMethods",
-        "operation": "ShippingMethodList",
-        "parameters": {
+      {
+        "id": "step_3",
+        "ui_action": "Navigate to Promotions",
+        "api_event": {
+          "type": "query",
+          "name": "ListPromotions",
+          "operation": "PromotionList",
+          "parameters": {
             "options": {
-            "take": 10,
-            "skip": 0,
-            "sort": {},
-            "filter": {}
-            }
-        },
-        "purpose": "Load existing shipping methods (optional)"
-      },
-      "dependencies": [],
-      "output_mapping": {
-        "existing_shipping_method": "shippingMethods.items",
-        "total_count": "shippingMethods.totalItems"
-      }
-    },
-    {
-    "id": "step_5",
-    "ui_action": "Click 'New Shipping Method', configure flat rate $15, and Create",
-    "api_event": {
-        "type": "mutation",
-        "name": "createShippingMethod",
-        "operation": "mutation CreateShippingMethod($input: CreateShippingMethodInput!) { createShippingMethod(input: $input) { id } }",
-        "parameters": {
-        "input": {
-            "code": "FR150",
-            "fulfillmentHandler": "manual-fulfillment",
-            "checker": {
-            "code": "default-shipping-eligibility-checker",
-            "arguments": [
-                {
-                "name": "orderMinimum",
-                "value": "1000"
+              "take": 10,
+              "skip": 0,
+              "sort": {},
+              "filter": {
+                "name": {
+                  "contains": ""
+                },
+                "couponCode": {
+                  "contains": ""
                 }
-            ]
-            },
-            "calculator": {
-            "code": "default-shipping-calculator",
-            "arguments": [
+              },
+              "filterOperator": "OR"
+            }
+          },
+          "purpose": "Load available promotions"
+        },
+        "dependencies": [],
+        "output_mapping": {
+          "existing_promotions": "response.data.promotions.items"
+        }
+      },
+      {
+        "id": "step_4",
+        "ui_action": "Click 'Create' in the Promotions section",
+        "api_event": {
+          "type": "mutation",
+          "name": "CreatePromotion",
+          "operation": "CreatePromotion",
+          "parameters": {
+            "input": {
+              "enabled": true,
+              "couponCode": "BF2024",
+              "perCustomerUsageLimit": 1,
+              "usageLimit": 1,
+              "conditions": [
                 {
-                "name": "rate",
-                "value": "1500"
+                  "code": "minimum_order_amount",
+                  "arguments": [
+                    {
+                      "name": "amount",
+                      "value": "10000"
+                    },
+                    {
+                      "name": "taxInclusive",
+                      "value": "false"
+                    }
+                  ]
                 },
                 {
-                "name": "includesTax",
-                "value": "auto"
-                },
-                {
-                "name": "taxRate",
-                "value": "0"
+                  "code": "customer_group",
+                  "arguments": [
+                    {
+                      "name": "customerGroupId",
+                      "value": "{{vip_group_id}}"
+                    }
+                  ]
                 }
-            ]
-            },
-            "translations": [
-            {
-                "languageCode": "en",
-                "name": "Flat Rate",
-                "description": "",
-                "customFields": {}
+              ],
+              "actions": [
+                {
+                  "code": "order_percentage_discount",
+                  "arguments": [
+                    {
+                      "name": "discount",
+                      "value": "15"
+                    }
+                  ]
+                }
+              ],
+              "translations": [
+                {
+                  "languageCode": "en",
+                  "name": "Black Friday Coupon Code (15%)",
+                  "description": "",
+                  "customFields": {}
+                }
+              ],
+              "customFields": {}
             }
-            ],
-            "customFields": {}
-        }
+          },
+          "purpose": "Create a new promotion that applies 15% discount for VIP customers with orders above $100"
         },
-        "purpose": "Create a shipping method with a flat rate calculator"
-    },
-    "dependencies": [],
-    "output_mapping": {
-        "shipping_method_id": "createShippingMethod.id"
+        "dependencies": ["step_1"],
+        "output_mapping": {
+          "promotion_id": "response.data.createPromotion.id"
         }
-    }]
+      }
+    ]
+  },
+  "track2": {
+    "workflow_name": "create_shipping_zone_and_shipping_method",
+    "description": "Create Oceania shipping zone with AU,NZ countries and $15 flat rate shipping",
+    "steps": [
+      {
+        "id": "step_1",
+        "ui_action": "Navigate to Settings: Zones",
+        "api_event": {
+          "type": "query",
+          "name": "ListZones",
+          "operation": "ZoneList",
+          "parameters": {
+            "options": {
+              "take": 10,
+              "skip": 0,
+              "sort": {},
+              "filter": {}
+            }
+          },
+          "purpose": "Load available zones"
+        },
+        "dependencies": [],
+        "output_mapping": {
+          "existing_zones": "response.data.zones.items"
+        }
+      },
+      {
+        "id": "step_2",
+        "ui_action": "Click 'Create New Zone'",
+        "api_event": {
+          "type": "mutation",
+          "name": "CreateZone",
+          "operation": "CreateZone",
+          "parameters": {
+            "input": {
+              "name": "Oceania New",
+              "memberIds": [],
+              "customFields": {}
+            }
+          },
+          "purpose": "Create new shipping zone"
+        },
+        "dependencies": [],
+        "output_mapping": {
+          "zone_id": "response.data.createZone.id"
+        }
+      },
+      {
+        "id": "step_3",
+        "ui_action": "Select AU and NZ, click 'Add to Zone' from the country list",
+        "api_event": {
+          "type": "mutation",
+          "name": "AddMembersToZone",
+          "operation": "AddMembersToZone",
+          "parameters": {
+            "zoneId": "{{zone_id}}",
+            "memberIds": ["{{au_id}}", "{{nz_id}}"]
+          },
+          "purpose": "Add countries to the created zone"
+        },
+        "dependencies": ["step_2"],
+        "output_mapping": {
+          "updated_zone_id": "response.data.addMembersToZone.id"
+        }
+      },
+      {
+        "id": "step_4",
+        "ui_action": "Navigate to Settings and click Shipping Methods",
+        "api_event": {
+          "type": "query",
+          "name": "ListShippingMethods",
+          "operation": "ShippingMethodList",
+          "parameters": {
+            "options": {
+              "take": 10,
+              "skip": 0,
+              "sort": {},
+              "filter": {}
+            }
+          },
+          "purpose": "Load existing shipping methods (optional)"
+        },
+        "dependencies": [],
+        "output_mapping": {
+          "existing_shipping_methods": "response.data.shippingMethods.items",
+          "total_count": "response.data.shippingMethods.totalItems"
+        }
+      },
+      {
+        "id": "step_5",
+        "ui_action": "Click 'New Shipping Method', configure flat rate $15, and Create",
+        "api_event": {
+          "type": "mutation",
+          "name": "CreateShippingMethod",
+          "operation": "CreateShippingMethod",
+          "parameters": {
+            "input": {
+              "code": "FR150",
+              "fulfillmentHandler": "manual-fulfillment",
+              "checker": {
+                "code": "default-shipping-eligibility-checker",
+                "arguments": [
+                  {
+                    "name": "orderMinimum",
+                    "value": "1000"
+                  }
+                ]
+              },
+              "calculator": {
+                "code": "default-shipping-calculator",
+                "arguments": [
+                  {
+                    "name": "rate",
+                    "value": "1500"
+                  },
+                  {
+                    "name": "includesTax",
+                    "value": "auto"
+                  },
+                  {
+                    "name": "taxRate",
+                    "value": "0"
+                  }
+                ]
+              },
+              "translations": [
+                {
+                  "languageCode": "en",
+                  "name": "Flat Rate",
+                  "description": "",
+                  "customFields": {}
+                }
+              ],
+              "customFields": {}
+            }
+          },
+          "purpose": "Create a shipping method with a flat rate calculator"
+        },
+        "dependencies": ["step_2", "step_3"],
+        "output_mapping": {
+          "shipping_method_id": "response.data.createShippingMethod.id"
+        }
+      }
+    ]
+  }
 }
