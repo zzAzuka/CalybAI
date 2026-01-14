@@ -1,0 +1,146 @@
+{
+  "workflow_name": "create_shipping_zone_and_shipping_method",
+  "description": "Create Oceania shipping zone with AU,NZ countries and $15 flat rate shipping",
+  "steps": [
+    {
+      "id": "step_1",
+      "ui_action": "Navigate to Settings: Zones",
+      "api_event": {
+        "type": "query",
+        "name": "list of zones",
+        "operation": "ZoneList",
+        "parameters": {
+            "options": {
+            "take": 10,
+            "skip": 0,
+            "sort": {},
+            "filter": {}
+            }
+        },
+        "purpose": "Load available zones"
+      },
+      "dependencies": [],
+      "output_mapping": {
+        "existing_zones": "response.data.zones.items"
+      }
+    },
+    {
+      "id": "step_2",
+      "ui_action": "Click 'Create New Zone'",
+      "api_event": {
+        "type": "mutation",
+        "name": "CreateZone",
+        "operation": "mutation CreateZone($input: CreateZoneInput!) { createZone(input: $input) { id } }",
+        "parameters": {
+          "input": {
+            "name": "Oceania New",
+            "memberIds": [],
+            "customFields": {}
+          }
+        },
+        "purpose": "Create new shipping zone"
+      },
+      "dependencies": [],
+      "output_mapping": {
+        "zone_id": "response.data.createZone.id"
+      }
+    },
+    {
+      "id": "step_3",
+      "ui_action": "Select AU and NZ, click 'Add to Zone' from the country list",
+      "api_event": {
+        "type": "mutation",
+        "name": "AddMembersToZone",
+        "operation": "mutation AddMembersToZone($zoneId: ID!, $memberIds: [ID!]!) { addMembersToZone(zoneId: $zoneId, memberIds: $memberIds) { id } }",
+        "parameters": {
+          "variables": {
+            "id": "{output.step_2.zone_id}",
+            "memberIds": ["{au_id}", "{nz_id}"]
+          }
+        },
+        "purpose": "Add countries to the created zone"
+      },
+      "dependencies": ["step_2"],
+      "output_mapping": {
+        "updated_zone_id": "addMembersToZone.id"
+      }
+    },
+    {
+      "id": "step_4",
+      "ui_action": "Navigate to Settings and Click Shipping Methods",
+      "api_event": {
+        "type": "query",
+        "name": "shippingMethods",
+        "operation": "ShippingMethodList",
+        "parameters": {
+            "options": {
+            "take": 10,
+            "skip": 0,
+            "sort": {},
+            "filter": {}
+            }
+        },
+        "purpose": "Load existing shipping methods (optional)"
+      },
+      "dependencies": [],
+      "output_mapping": {
+        "existing_shipping_method": "shippingMethods.items",
+        "total_count": "shippingMethods.totalItems"
+      }
+    },
+    {
+    "id": "step_5",
+    "ui_action": "Click 'New Shipping Method', configure flat rate $15, and Create",
+    "api_event": {
+        "type": "mutation",
+        "name": "createShippingMethod",
+        "operation": "mutation CreateShippingMethod($input: CreateShippingMethodInput!) { createShippingMethod(input: $input) { id } }",
+        "parameters": {
+        "input": {
+            "code": "FR150",
+            "fulfillmentHandler": "manual-fulfillment",
+            "checker": {
+            "code": "default-shipping-eligibility-checker",
+            "arguments": [
+                {
+                "name": "orderMinimum",
+                "value": "1000"
+                }
+            ]
+            },
+            "calculator": {
+            "code": "default-shipping-calculator",
+            "arguments": [
+                {
+                "name": "rate",
+                "value": "1500"
+                },
+                {
+                "name": "includesTax",
+                "value": "auto"
+                },
+                {
+                "name": "taxRate",
+                "value": "0"
+                }
+            ]
+            },
+            "translations": [
+            {
+                "languageCode": "en",
+                "name": "Flat Rate",
+                "description": "",
+                "customFields": {}
+            }
+            ],
+            "customFields": {}
+        }
+        },
+        "purpose": "Create a shipping method with a flat rate calculator"
+    },
+    "dependencies": [],
+    "output_mapping": {
+        "shipping_method_id": "createShippingMethod.id"
+        }
+    }]
+}
